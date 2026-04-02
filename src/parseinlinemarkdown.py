@@ -72,5 +72,16 @@ def split_nodes_links(old_nodes):
     new_nodes = [node for node in new_nodes if node.text != ""]
     return new_nodes
 
-#def parse_text(old_nodes):
-#    return split_nodes_delimiter()
+def parse_text(old_nodes):
+    return split_nodes_delimiter(
+        split_nodes_delimiter(
+            split_nodes_delimiter(
+                split_nodes_images(
+                    split_nodes_links(
+                        old_nodes
+                    )
+                )
+            , "_")
+        , "`"), 
+    "**")
+

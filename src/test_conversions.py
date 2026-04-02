@@ -1,6 +1,6 @@
 import unittest
 
-from parsemarkdown import split_nodes_delimiter
+from parseinlinemarkdown import split_nodes_delimiter
 from textnode import TextNode, TextType
 
 
