@@ -2,7 +2,7 @@ from textnode import TextNode, TextType
 from htmlnode import HTMLNode
 
 def main():
-    #test_textnode = TextNode("Hello world!", TextType.PLAIN, None)
+    #test_textnode = TextNode("Hello world!", TextType.TEXT, None)
     #test_htmlnode = HTMLNode("a", "A link", None, {"href":"boot.dev"})
     #print(test_textnode)
     #print(test_htmlnode)

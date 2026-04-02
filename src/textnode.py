@@ -3,7 +3,7 @@ from enum import Enum
 from htmlnode import LeafNode
 
 class TextType(Enum):
-    PLAIN = "plain"
+    TEXT = "plain"
     BOLD = "bold"
     ITALIC = "Italic"
     CODE = "code"
@@ -33,7 +33,7 @@ class TextNode:
         props = None
         value = self.text
         match self.text_type:
-            case TextType.PLAIN:
+            case TextType.TEXT:
                 tag = None
             case TextType.BOLD:
                 tag = "b"
