@@ -11,7 +11,7 @@ class TextType(Enum):
     IMAGE = "image"
         
 class TextNode:
-    def __init__(self, text, text_type, url=None):
+    def __init__(self, text :str, text_type :TextType, url :str|None =None):
         if not isinstance(text_type, TextType):
             raise TypeError("text_type is not a valid entry, see TextType declaration")
         self.text = text
