@@ -11,7 +11,7 @@ def split_nodes_delimiter(old_nodes:list[TextNode], delimiter:str):
     if delimiter not in delimiter_map:
         raise Exception("Unknown delimiter provided, cannot correctly type children")
     text_type = delimiter_map[delimiter]
-    new_nodes = []
+    new_nodes:list[TextNode] = []
     for old_node in old_nodes:
         if old_node.text_type != TextType.TEXT:
             new_nodes.append(old_node)
@@ -35,7 +35,7 @@ def extract_markdown_links(text:str):
     return re.findall(test, text)
 
 def split_nodes_images(old_nodes:list[TextNode]):
-    new_nodes = []
+    new_nodes:list[TextNode] = []
     for old_node in old_nodes:
         if old_node.text_type != TextType.TEXT:
             new_nodes.append(old_node)
@@ -54,7 +54,7 @@ def split_nodes_images(old_nodes:list[TextNode]):
     return new_nodes
 
 def split_nodes_links(old_nodes):
-    new_nodes = []
+    new_nodes:list[TextNode] = []
     for old_node in old_nodes:
         if old_node.text_type != TextType.TEXT:
             new_nodes.append(old_node)

@@ -1,7 +1,7 @@
 import unittest
 
 from parseinlinemarkdown import extract_markdown_images, extract_markdown_links, split_nodes_images, split_nodes_links, parse_text
-from parseblockmarkdown import markdown_to_blocks
+from parseblockmarkdown import markdown_to_blocks, MarkdownBlock, BlockType
 from textnode import TextNode, TextType
 
 
@@ -75,13 +75,25 @@ class TestExtractElements(unittest.TestCase):
 
     def test_markdown_to_blocks(self):
         md = """
-This is **bolded** paragraph
+## This is **bolded** heading
 
 This is another paragraph with _italic_ text and `code` here
 This is the same paragraph on a new line
 
 - This is a list
 - with items
+
+```
+This is code
+and this too
+```
+
+> That's what I said! - Me
+
+1. This
+2. Is
+3. A
+4. List
 
 
 
@@ -90,10 +102,13 @@ This is the same paragraph on a new line
         self.assertEqual(
             blocks,
             [
-                "This is **bolded** paragraph",
-                "This is another paragraph with _italic_ text and `code` here\nThis is the same paragraph on a new line",
-                "- This is a list\n- with items",
-            ],
+                MarkdownBlock("## This is **bolded** heading", BlockType.HEADING),
+                MarkdownBlock("This is another paragraph with _italic_ text and `code` here\nThis is the same paragraph on a new line", BlockType.PARAGRAPH),
+                MarkdownBlock("- This is a list\n- with items", BlockType.UNORDERED_LIST),
+                MarkdownBlock("```\nThis is code\nand this too\n```", BlockType.CODE),
+                MarkdownBlock("> That's what I said! - Me", BlockType.QUOTE),
+                MarkdownBlock("1. This\n2. Is\n3. A\n4. List", BlockType.ORDERED_LIST)
+            ]
         )
 
 
