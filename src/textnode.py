@@ -14,6 +14,8 @@ class TextNode:
     def __init__(self, text :str, text_type :TextType, url :str|None =None):
         if not isinstance(text_type, TextType):
             raise TypeError("text_type is not a valid entry, see TextType declaration")
+        if text == None:
+            raise ValueError("Text node canot be created with a value of None")
         self.text = text
         self.text_type = text_type
         self.url = url
@@ -46,6 +48,6 @@ class TextNode:
                 props = {"href":self.url}
             case TextType.IMAGE:
                 tag = "img"
-                value = None
+                value = ""
                 props = {"src":self.url, "alt":self.text}
         return LeafNode(tag, value, props)
