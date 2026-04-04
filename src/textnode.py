@@ -2,6 +2,7 @@ from enum import Enum
 
 from htmlnode import LeafNode
 
+#Supported types of text for inline/in-block parsing
 class TextType(Enum):
     TEXT = "text"
     BOLD = "bold"
@@ -9,7 +10,8 @@ class TextType(Enum):
     CODE = "code"
     LINK = "link"
     IMAGE = "image"
-        
+
+#Structure to store text node contents and type
 class TextNode:
     def __init__(self, text :str, text_type :TextType, url :str|None =None):
         if not isinstance(text_type, TextType):
@@ -31,6 +33,7 @@ class TextNode:
     def __repr__(self):
         return f"TextNode({self.text}, {self.text_type.value}, {self.url})"
     
+    #Move to converter class?
     def text_node_to_html_node(self):
         props = None
         value = self.text

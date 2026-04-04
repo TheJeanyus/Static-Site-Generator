@@ -1,6 +1,6 @@
 import re
 
-from parseblockmarkdown import BlockType, markdown_to_blocks
+from converter import BlockType, markdown_to_blocks
 from parseinlinemarkdown import parse_text
 from textnode import TextNode, TextType
 from htmlnode import HTMLNode, ParentNode, LeafNode

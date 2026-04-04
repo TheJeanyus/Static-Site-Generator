@@ -1,7 +1,7 @@
 import unittest
 
 from parseinlinemarkdown import extract_markdown_images, extract_markdown_links, split_nodes_images, split_nodes_links, parse_text
-from parseblockmarkdown import markdown_to_blocks, MarkdownBlock, BlockType
+from converter import markdown_to_blocks, MarkdownBlock, BlockType
 from textnode import TextNode, TextType
 
 
