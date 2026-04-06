@@ -1,7 +1,7 @@
-import converter
+import src.converter as converter
 
-from htmlnode import HTMLNode, ParentNode
-from markdowndoc import MarkdownDoc
+from src.htmlnode import HTMLNode, ParentNode
+from src.markdowndoc import MarkdownDoc
 
 class HTMLTree:
     def __init__(self, root:HTMLNode):
@@ -13,5 +13,6 @@ class HTMLTree:
             doc = doc.contents
         block_nodes = converter.markdown_to_html_nodes(doc)
         div = ParentNode("div", block_nodes)
+        #print(div.to_html())
         return HTMLTree(div)
     

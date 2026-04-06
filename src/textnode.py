@@ -1,6 +1,6 @@
 from enum import Enum
 
-from htmlnode import LeafNode
+from src.htmlnode import LeafNode
 
 #Supported types of text for inline/in-block parsing
 class TextType(Enum):

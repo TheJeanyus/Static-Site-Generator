@@ -1,9 +1,9 @@
 import re
 
-from textnode import TextType, TextNode
-from markdowndoc import MarkdownDoc
-from markdownblock import BlockType, MarkdownBlock
-from htmlnode import ParentNode, LeafNode
+from src.textnode import TextType, TextNode
+from src.markdowndoc import MarkdownDoc
+from src.markdownblock import BlockType, MarkdownBlock
+from src.htmlnode import ParentNode, LeafNode
 
 
 #Helper for conversion that are one-to-many or many-to-many
@@ -17,9 +17,9 @@ BLOCK_PATTTERN = re.compile(r"(?P<heading>#+\x20.*)|"\
                     r"(?P<paragraph>^\n([^#`>\-\d](?:.+\n)*))", 
                     flags=re.MULTILINE)
 
-IMAGE_PATTERN = re.compile(r"(!\[(.*?)\]\((.+?)\))")
+IMAGE_PATTERN = re.compile(r"(!\[.*?\]\(.+?\))")
 
-LINK_PATTERN = re.compile(r"(?<!\!)(\[(.+?)\]\((.+?)\))")
+LINK_PATTERN = re.compile(r"(?<!\!)(\[.+?\]\(.+?\))")
 
 #Dictionary mapping inline delimiters to appropriate tags
 DELIMITER_MAP = {
@@ -81,10 +81,11 @@ def parse_heading(text:str):
     return ParentNode(f"h{start_len}", inline_elements)
 
 def parse_code(text:str):
-    return ParentNode("pre",[ParentNode("code",[LeafNode("", text)])])
+    return ParentNode("pre",[ParentNode("code",[LeafNode(None, text[4:-3])])])
 
 def parse_quote(text:str):
     quote = "\n".join([line[1:].strip(" ") for line in text.split("\n")])
+    print(quote)
     return ParentNode("blockquote", markdown_to_html_nodes(quote))
 
 def parse_list(text:str, ordered:bool):
@@ -130,7 +131,8 @@ def split_nodes_images(old_nodes:list[TextNode]):
         matches = list(filter(None,re.split(IMAGE_PATTERN,old_node.text)))
         for i in range(len(matches)):
             if re.match(IMAGE_PATTERN, matches[i]):
-                new_nodes.append(TextNode(matches[i], TextType.IMAGE))
+                halves = matches[i].split("](")
+                new_nodes.append(TextNode(halves[0][2:], TextType.IMAGE, halves[1][:-1]))
             else:
                 new_nodes.append(TextNode(matches[i], TextType.TEXT))
     return new_nodes
@@ -144,7 +146,8 @@ def split_nodes_links(old_nodes:list[TextNode]):
         matches = list(filter(None,re.split(LINK_PATTERN,old_node.text)))
         for i in range(len(matches)):
             if re.match(LINK_PATTERN, matches[i]):
-                new_nodes.append(TextNode(matches[i], TextType.IMAGE))
+                halves = matches[i].split("](")
+                new_nodes.append(TextNode(halves[0][1:], TextType.LINK, halves[1][:-1]))
             else:
                 new_nodes.append(TextNode(matches[i], TextType.TEXT))
     return new_nodes
