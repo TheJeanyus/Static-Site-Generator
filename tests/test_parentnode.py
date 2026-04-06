@@ -1,6 +1,6 @@
 import unittest
 
-from htmlnode import ParentNode, LeafNode
+from src.htmlnode import ParentNode, LeafNode
 
 
 class TestParentNode(unittest.TestCase):
@@ -27,3 +27,8 @@ class TestParentNode(unittest.TestCase):
             parent_node.to_html(),
             "<div class=\"warning\"><span>This is a <b>grandchild</b></span></div>",
         )
+
+
+
+if __name__ == "__main__":
+    unittest.main()

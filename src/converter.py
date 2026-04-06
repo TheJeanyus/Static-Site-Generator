@@ -3,111 +3,161 @@ import re
 from textnode import TextType, TextNode
 from markdowndoc import MarkdownDoc
 from markdownblock import BlockType, MarkdownBlock
+from htmlnode import ParentNode, LeafNode
 
 
 #Helper for conversion that are one-to-many or many-to-many
-class converter:
-    BLOCK_PATTTERN = re.compile(r"(?P<heading>#+\x20.*)|"\
-                        r"(?P<code>```\n[^`]*\n```)|"\
-                        r"(?P<quote>(?:^>\x20?.*\n)*)|"\
-                        r"(?P<unordered_list>(?:^-\x20.*\n)*)|"\
-                        r"(?P<ordered_list>(?:^\d\.\x20.*\n)*)|"\
-                        r"(?P<paragraph>^\n([^#`>\-\d](?:.+\n)*))", 
-                        flags=re.MULTILINE)
-    
-    IMAGE_PATTERN = re.compile(r"!\[(.*?)\]\((.+?)\)")
 
-    LINK_PATTERN = re.compile(r"(?<!\!)\[(.+?)\]\((.+?)\)")
+#Regex Patterns used in the module
+BLOCK_PATTTERN = re.compile(r"(?P<heading>#+\x20.*)|"\
+                    r"(?P<code>```\n[^`]*\n```)|"\
+                    r"(?P<quote>(?:^>\x20?.*\n)*)|"\
+                    r"(?P<unordered_list>(?:^-\x20.*\n)*)|"\
+                    r"(?P<ordered_list>(?:^\d\.\x20.*\n)*)|"\
+                    r"(?P<paragraph>^\n([^#`>\-\d](?:.+\n)*))", 
+                    flags=re.MULTILINE)
 
-    DELIMITER_MAP = {
-                    "**":TextType.BOLD,
-                    "_":TextType.ITALIC,
-                    "`":TextType.CODE
-                    }
+IMAGE_PATTERN = re.compile(r"(!\[(.*?)\]\((.+?)\))")
 
-    def markdown_to_blocks(self, doc:MarkdownDoc):
-        m = re.finditer(self.BLOCK_PATTTERN, doc.contents)
-        full_list = [x.groupdict() for x in m if x.group() != ""]
-        block_list:list[MarkdownBlock] = []
-        for block_dict in full_list:
-            for key in block_dict:
-                if block_dict[key] is not None and block_dict[key].strip() != "":
-                    block_list.append(MarkdownBlock(block_dict[key].strip(), BlockType(key)))
-        #print(block_list)
-        return block_list
+LINK_PATTERN = re.compile(r"(?<!\!)(\[(.+?)\]\((.+?)\))")
 
-    def split_nodes_delimiter(self, old_nodes:list[TextNode], delimiter:str):
-        if delimiter not in self.DELIMITER_MAP:
-            raise Exception("Unknown delimiter provided, cannot correctly type children")
-        text_type = self.DELIMITER_MAP[delimiter]
-        new_nodes:list[TextNode] = []
-        for old_node in old_nodes:
-            if old_node.text_type != TextType.TEXT:
-                new_nodes.append(old_node)
-                continue
-            node_pieces = old_node.text.split(delimiter)
-            if len(node_pieces) % 2 != 1:
-                raise Exception(f"An uneven number of delimters was found in: {old_node.text}")
-            new_nodes.extend(
-                [TextNode(text, text_type if index % 2 else TextType.TEXT) 
-                for index, text in enumerate(node_pieces)]
-                )
-        new_nodes = [node for node in new_nodes if node.text != ""]
-        return new_nodes
+#Dictionary mapping inline delimiters to appropriate tags
+DELIMITER_MAP = {
+                "**":TextType.BOLD,
+                "_":TextType.ITALIC,
+                "`":TextType.CODE
+                }
 
-    def extract_markdown_images(self, text:str):
-        return re.findall(self.IMAGE_PATTERN, text)
-        
-    def extract_markdown_links(self, text:str):
-        return re.findall(self.LINK_PATTERN, text)
+#Process markdown doc contents to html nodes
+def markdown_to_html_nodes(doc:str|MarkdownDoc):
+    if isinstance(doc, MarkdownDoc):
+        doc = doc.contents
+    block_list = markdown_to_blocks(doc)
+    block_nodes:list[ParentNode] = []
+    for block in block_list:
+        match block.block_type:
+            case BlockType.PARAGRAPH:
+                block_node = parse_paragraph(block.text)
+            case BlockType.HEADING:
+                block_node = parse_heading(block.text)
+            case BlockType.CODE:
+                block_node = parse_code(block.text)
+            case BlockType.QUOTE:
+                block_node = parse_quote(block.text)
+            case BlockType.UNORDERED_LIST:
+                block_node = parse_list(block.text, False)
+            case BlockType.ORDERED_LIST:
+                block_node = parse_list(block.text, True)
+        block_nodes.append(block_node)
+    return block_nodes
 
-    def split_nodes_images(self, old_nodes:list[TextNode]):
-        new_nodes:list[TextNode] = []
-        for old_node in old_nodes:
-            if old_node.text_type != TextType.TEXT:
-                new_nodes.append(old_node)
-                continue
-            images = self.extract_markdown_images(old_node.text)
-            if len(images) == 0:
-                new_nodes.append(old_node)
-                continue
-            temp = old_node.text
-            for image in images:
-                text, temp = temp.split(f"![{image[0]}]({image[1]})", 1)
-                new_nodes.append(TextNode(text, TextType.TEXT))
-                new_nodes.append(TextNode(image[0], TextType.IMAGE, image[1]))
-            new_nodes.append(TextNode(temp, TextType.TEXT))
-        new_nodes = [node for node in new_nodes if (node.text != "" or node.text_type == TextType.IMAGE)]
-        return new_nodes
+#Helper to split doc contents into parseable blocks
+def markdown_to_blocks(doc:str|MarkdownDoc):
+    if isinstance(doc, MarkdownDoc):
+        doc = doc.contents
+    m = re.finditer(BLOCK_PATTTERN, doc)
+    full_list = [x.groupdict() for x in m if x.group() != ""]
+    block_list:list[MarkdownBlock] = []
+    for block_dict in full_list:
+        for key in block_dict:
+            if block_dict[key] is not None and block_dict[key].strip() != "":
+                block_list.append(MarkdownBlock(block_dict[key].strip(), BlockType(key)))
+    #print(block_list)
+    return block_list
 
-    def split_nodes_links(self, old_nodes:list[TextNode]):
-        new_nodes:list[TextNode] = []
-        for old_node in old_nodes:
-            if old_node.text_type != TextType.TEXT:
-                new_nodes.append(old_node)
-                continue
-            links = self.extract_markdown_links(old_node.text)
-            if len(links) == 0:
-                new_nodes.append(old_node)
-                continue
-            temp = old_node.text
-            for link in links:
-                text, temp = temp.split(f"[{link[0]}]({link[1]})", 1)
-                new_nodes.append(TextNode(text, TextType.TEXT))
-                new_nodes.append(TextNode(link[0], TextType.LINK, link[1]))
-            new_nodes.append(TextNode(temp, TextType.TEXT))
-        new_nodes = [node for node in new_nodes if node.text != ""]
-        return new_nodes
+#Helpers to parse markdown block types
+def parse_paragraph(text:str):
+    text = " ".join(text.split("\n")).strip(" ")
+    inline_elements = [node.text_node_to_html_node() for node in parse_text([TextNode(text, TextType.TEXT)])]
+    return ParentNode("p", inline_elements)
 
-    def parse_text(self, old_nodes):
-        return self.split_nodes_delimiter(
-            self.split_nodes_delimiter(
-                self.split_nodes_delimiter(
-                    self.split_nodes_images(
-                        self.split_nodes_links(
-                            old_nodes
-                        )
+def parse_heading(text:str):
+    start = re.match(r"^#+ ", text)
+    if start:
+        start_len = len(start.group()) - 1
+    else:
+        raise Exception("Markdown heading parsing failed, invalid format detected")
+    inline_elements = [node.text_node_to_html_node() for node in parse_text([TextNode(text[start_len:], TextType.TEXT)])]
+    return ParentNode(f"h{start_len}", inline_elements)
+
+def parse_code(text:str):
+    return ParentNode("pre",[ParentNode("code",[LeafNode("", text)])])
+
+def parse_quote(text:str):
+    quote = "\n".join([line[1:].strip(" ") for line in text.split("\n")])
+    return ParentNode("blockquote", markdown_to_html_nodes(quote))
+
+def parse_list(text:str, ordered:bool):
+    lines = text.split("\n")
+    line_nodes = []
+    for line in lines:
+        m = re.match(r"^(?:- |\d\. )(.*)", line, flags=re.MULTILINE)
+        if m:
+            line = m.group(1)
+        else:
+            raise Exception("Markdown list parsing failed, invalid format detected")
+        line_items = [node.text_node_to_html_node() for node in parse_text([TextNode(line, TextType.TEXT)])]
+        line_node = ParentNode("li", line_items)
+        line_nodes.append(line_node)
+    return ParentNode("ol" if ordered else "ul", line_nodes)
+
+#Functions to handle inline parsing to text nodes
+def split_nodes_delimiter(old_nodes:list[TextNode], delimiter:str):
+    if delimiter not in DELIMITER_MAP:
+        raise Exception("Unknown delimiter provided, cannot correctly type children")
+    text_type = DELIMITER_MAP[delimiter]
+    new_nodes:list[TextNode] = []
+    for old_node in old_nodes:
+        if old_node.text_type != TextType.TEXT:
+            new_nodes.append(old_node)
+            continue
+        node_pieces = old_node.text.split(delimiter)
+        if len(node_pieces) % 2 != 1:
+            raise Exception(f"An uneven number of delimters was found in: {old_node.text}")
+        new_nodes.extend(
+            [TextNode(text, text_type if index % 2 else TextType.TEXT) 
+            for index, text in enumerate(node_pieces)]
+            )
+    new_nodes = [node for node in new_nodes if node.text != ""]
+    return new_nodes
+
+def split_nodes_images(old_nodes:list[TextNode]):
+    new_nodes:list[TextNode] = []
+    for old_node in old_nodes:
+        if old_node.text_type != TextType.TEXT:
+            new_nodes.append(old_node)
+            continue
+        matches = list(filter(None,re.split(IMAGE_PATTERN,old_node.text)))
+        for i in range(len(matches)):
+            if re.match(IMAGE_PATTERN, matches[i]):
+                new_nodes.append(TextNode(matches[i], TextType.IMAGE))
+            else:
+                new_nodes.append(TextNode(matches[i], TextType.TEXT))
+    return new_nodes
+
+def split_nodes_links(old_nodes:list[TextNode]):
+    new_nodes:list[TextNode] = []
+    for old_node in old_nodes:
+        if old_node.text_type != TextType.TEXT:
+            new_nodes.append(old_node)
+            continue
+        matches = list(filter(None,re.split(LINK_PATTERN,old_node.text)))
+        for i in range(len(matches)):
+            if re.match(LINK_PATTERN, matches[i]):
+                new_nodes.append(TextNode(matches[i], TextType.IMAGE))
+            else:
+                new_nodes.append(TextNode(matches[i], TextType.TEXT))
+    return new_nodes
+
+def parse_text(old_nodes:list[TextNode]):
+    return split_nodes_delimiter(
+        split_nodes_delimiter(
+            split_nodes_delimiter(
+                split_nodes_images(
+                    split_nodes_links(
+                        old_nodes
                     )
-                , "_")
-            , "`"), 
-        "**")        
+                )
+            , "_")
+        , "`"), 
+    "**")        

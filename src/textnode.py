@@ -33,7 +33,6 @@ class TextNode:
     def __repr__(self):
         return f"TextNode({self.text}, {self.text_type.value}, {self.url})"
     
-    #Move to converter class?
     def text_node_to_html_node(self):
         props = None
         value = self.text

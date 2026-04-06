@@ -1,6 +1,6 @@
 import unittest
 
-from htmlnode import HTMLNode
+from src.htmlnode import HTMLNode
 
 
 class TestHTMLNode(unittest.TestCase):
@@ -12,7 +12,7 @@ class TestHTMLNode(unittest.TestCase):
         try:
             node = HTMLNode()
             node.to_html()  #Expected to throw implementation error
-            self.assertIs(False)
+            self.assertTrue(False)
         except Exception as err:
             self.assertIsInstance(err, NotImplementedError)
     
