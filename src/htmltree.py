@@ -4,7 +4,7 @@ from src.htmlnode import HTMLNode, ParentNode
 from src.markdowndoc import MarkdownDoc
 
 class HTMLTree:
-    def __init__(self, root:HTMLNode):
+    def __init__(self, root:ParentNode):
         self.root = root
 
     @classmethod
@@ -15,4 +15,10 @@ class HTMLTree:
         div = ParentNode("div", block_nodes)
         #print(div.to_html())
         return HTMLTree(div)
+    
+    def extract_title(self):
+        for child in self.root.children:
+            if child.tag == "h1":
+                return child.value
+        raise Exception("No top tier heading detected, title could not be parsed")
     
