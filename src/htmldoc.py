@@ -21,7 +21,7 @@ class HTMLDoc:
                 text = self.contents
             template = re.sub(r"\{\{ Title \}\}", self.title, template)
             template = re.sub(r"\{\{ Content \}\}", text, template)
-            template = re.sub(r'(href|src)="/', r'\1="' + basepath, template)
+            template = re.sub(r'(a href|src)="/', r'\1="' + basepath, template)
             #href="/ with href="{basepath}
             #src="/ with src="{basepath}    
             f.write(template)
