@@ -11,7 +11,7 @@ class HTMLDoc:
         if self.title is None:
             raise ValueError("Title not found")
 
-    def write_doc(self, template_path:str):
+    def write_doc(self, template_path:str, basepath:str = "/"):
         template = open(template_path).read()
         #print(template)
         with open(self.path, mode="w") as f:
@@ -20,6 +20,9 @@ class HTMLDoc:
             else:
                 text = self.contents
             template = re.sub(r"\{\{ Title \}\}", self.title, template)
-            template = re.sub(r"\{\{ Content \}\}", text, template)    
+            template = re.sub(r"\{\{ Content \}\}", text, template)
+            template = re.sub(r'(href|src)="/', r'\1="' + basepath, template)
+            #href="/ with href="{basepath}
+            #src="/ with src="{basepath}    
             f.write(template)
             f.close()
