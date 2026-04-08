@@ -8,9 +8,11 @@ from htmltree import HTMLTree
 from htmldoc import HTMLDoc
 
 def main():
-    basepath = sys.argv[1] if len(sys.argv) > 1 else "./"
+    basepath = sys.argv[1] if len(sys.argv) > 1 else "/"
+    #base_dir = os.path.join(".", basepath)
     if not os.path.isdir(basepath):
-        os.makedirs(os.path.abspath(basepath), exist_ok=True)
+        print("." + basepath)
+        os.makedirs("." + basepath, exist_ok=True)
     copy_static(basepath)
     generate_content_recursive(basepath)
     
@@ -46,7 +48,7 @@ def generate_content(basepath:str, src_path:str, template_path:str = "./template
 
 
 def copy_static(basepath:str):
-    public = os.path.join(basepath, "docs")
+    public = "." + os.path.join(basepath, "docs")
     static = "./static"
     if os.path.exists(public):
         print(f"Clearing old data at {public}")
