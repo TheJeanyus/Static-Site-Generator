@@ -6,3 +6,10 @@ class MarkdownDoc:
         return self.contents
     
     #Opening and file capabilities
+    @classmethod
+    def open_doc(cls, path):
+        with open(path, "r") as f:
+            text = f.read()
+            f.close()
+        return MarkdownDoc(text)
+            

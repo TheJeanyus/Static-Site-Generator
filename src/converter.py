@@ -1,21 +1,21 @@
 import re
 
-from src.textnode import TextType, TextNode
-from src.markdowndoc import MarkdownDoc
-from src.markdownblock import BlockType, MarkdownBlock
-from src.htmlnode import ParentNode, LeafNode
+from textnode import TextType, TextNode
+from markdowndoc import MarkdownDoc
+from markdownblock import BlockType, MarkdownBlock
+from htmlnode import ParentNode, LeafNode
 
 
 #Helper for conversion that are one-to-many or many-to-many
 
 #Regex Patterns used in the module
-BLOCK_PATTTERN = re.compile(r"(?P<heading>#+\x20.*)|"\
-                    r"(?P<code>```\n[^`]*\n```)|"\
-                    r"(?P<quote>(?:^>\x20?.*\n)*)|"\
-                    r"(?P<unordered_list>(?:^-\x20.*\n)*)|"\
-                    r"(?P<ordered_list>(?:^\d\.\x20.*\n)*)|"\
-                    r"(?P<paragraph>^\n([^#`>\-\d](?:.+\n)*))", 
-                    flags=re.MULTILINE)
+BLOCK_PATTTERN = re.compile(r"(?:(?<=^)|(?<=\n\n))(?=#+\x20)(?P<heading>.*?)(?=\n\n|$)|"\
+                    r"(?:(?<=^)|(?<=\n\n))(?=```)(?P<code>.*?)(?=\n\n|$)|"\
+                    r"(?:(?<=^)|(?<=\n\n))(?P<quote>(?:>.*?)+)(?=\n\n|$)|"\
+                    r"(?:(?<=^)|(?<=\n\n))(?P<unordered_list>(?:-\x20.*?)+)(?=\n\n|$)|"\
+                    r"(?:(?<=^)|(?<=\n\n))(?P<ordered_list>(?:\d\.\x20.*?)+)(?=\n\n|$)|"\
+                    r"(?:(?<=^)|(?<=\n\n))(?!#+ )(?!- )(?!\d\. )(?!> ?)(?!```\n)(?P<paragraph>.*?)(?=\n\n|$)", 
+                    flags=re.DOTALL)
 
 IMAGE_PATTERN = re.compile(r"(!\[.*?\]\(.+?\))")
 
@@ -34,6 +34,7 @@ def markdown_to_html_nodes(doc:str|MarkdownDoc):
         doc = doc.contents
     block_list = markdown_to_blocks(doc)
     block_nodes:list[ParentNode] = []
+    #print(block_list)
     for block in block_list:
         match block.block_type:
             case BlockType.PARAGRAPH:
@@ -68,7 +69,10 @@ def markdown_to_blocks(doc:str|MarkdownDoc):
 #Helpers to parse markdown block types
 def parse_paragraph(text:str):
     text = " ".join(text.split("\n")).strip(" ")
-    inline_elements = [node.text_node_to_html_node() for node in parse_text([TextNode(text, TextType.TEXT)])]
+    #print(text)
+    inline_elements = [node.text_node_to_html_node() for node in parse_text(text)]
+    if inline_elements is None:
+        raise ValueError(f"No children parsed for paragraph: {text}, {parse_text(text)}")
     return ParentNode("p", inline_elements)
 
 def parse_heading(text:str):
@@ -77,7 +81,7 @@ def parse_heading(text:str):
         start_len = len(start.group()) - 1
     else:
         raise Exception("Markdown heading parsing failed, invalid format detected")
-    inline_elements = [node.text_node_to_html_node() for node in parse_text([TextNode(text[start_len:], TextType.TEXT)])]
+    inline_elements = [node.text_node_to_html_node() for node in parse_text([TextNode(text[start_len + 1:], TextType.TEXT)])]
     return ParentNode(f"h{start_len}", inline_elements)
 
 def parse_code(text:str):
@@ -85,7 +89,6 @@ def parse_code(text:str):
 
 def parse_quote(text:str):
     quote = "\n".join([line[1:].strip(" ") for line in text.split("\n")])
-    print(quote)
     return ParentNode("blockquote", markdown_to_html_nodes(quote))
 
 def parse_list(text:str, ordered:bool):
@@ -152,7 +155,9 @@ def split_nodes_links(old_nodes:list[TextNode]):
                 new_nodes.append(TextNode(matches[i], TextType.TEXT))
     return new_nodes
 
-def parse_text(old_nodes:list[TextNode]):
+def parse_text(old_nodes:list[TextNode]|str):
+    if isinstance(old_nodes, str):
+        old_nodes = [TextNode(old_nodes, TextType.TEXT)]
     return split_nodes_delimiter(
         split_nodes_delimiter(
             split_nodes_delimiter(

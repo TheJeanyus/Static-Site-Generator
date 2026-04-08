@@ -1,7 +1,7 @@
-import src.converter as converter
+import converter
 
-from src.htmlnode import HTMLNode, ParentNode
-from src.markdowndoc import MarkdownDoc
+from htmlnode import HTMLNode, ParentNode
+from markdowndoc import MarkdownDoc
 
 class HTMLTree:
     def __init__(self, root:ParentNode):
@@ -17,8 +17,12 @@ class HTMLTree:
         return HTMLTree(div)
     
     def extract_title(self):
+        assert self.root.children is not None
         for child in self.root.children:
             if child.tag == "h1":
-                return child.value
+                title = ""
+                for granchild in child.children:
+                    title += granchild.value
+            return title        
         raise Exception("No top tier heading detected, title could not be parsed")
     

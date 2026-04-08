@@ -1,16 +1,47 @@
-import sys
 import os
+import sys
 import shutil
+import re
+
+from markdowndoc import MarkdownDoc
+from htmltree import HTMLTree
+from htmldoc import HTMLDoc
 
 def main():
+    basepath = sys.argv[0] if sys.argv[0] else "/"
     copy_static()
+    generate_content_recursive(basepath, )
     
-        
         
 
 
 
     pass
+
+def generate_content_recursive(basepath:str, template_path:str = "template.html"):
+    content_dir = os.path.join(basepath, "content")
+    content_list = [os.path.join(content_dir, item) for item in os.listdir(content_dir)]
+    while len(content_list) > 0:
+        content = content_list.pop(0)
+        if os.path.isfile(content):
+            generate_content(basepath, content, os.path.join(basepath, template_path))
+        else:
+            content_list.extend([os.path.join(content, file) for file in os.listdir(content)])
+    pass
+
+
+def generate_content(basepath:str, src_path:str, template_path:str = "./template.html"):
+    #content_dir = os.path.join(basepath, "content")
+    #public_dir = os.path.join(basepath, "docs")
+    dest_path = re.sub(r"content", r"docs", src_path)
+    dest_path = re.sub(r".md$", r".html", dest_path)
+    print(f"Generating {dest_path} from {src_path} from template {template_path}")
+    markdown = MarkdownDoc.open_doc(src_path) 
+    contents = HTMLTree.from_markdown_doc(markdown)
+    os.makedirs(os.path.dirname(os.path.abspath(dest_path)), exist_ok = True)
+    html_doc = HTMLDoc(dest_path, contents)
+    html_doc.write_doc(template_path)
+
 
 def copy_static():
     public = "./public"
