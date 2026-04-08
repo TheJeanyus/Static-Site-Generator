@@ -37,7 +37,7 @@ def generate_content_recursive(basepath:str, template_path:str = "./template.htm
 def generate_content(basepath:str, src_path:str, template_path:str = "./template.html"):
     #content_dir = os.path.join(basepath, "content")
     #public_dir = os.path.join(basepath, "docs")
-    dest_path = re.sub(r"content", os.path.join(basepath, "docs"), src_path)
+    dest_path = re.sub(r"content", r"docs", src_path)
     dest_path = re.sub(r".md$", r".html", dest_path)
     print(f"Generating {dest_path} from {src_path} from template {template_path}")
     markdown = MarkdownDoc.open_doc(src_path) 
