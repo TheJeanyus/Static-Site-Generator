@@ -48,7 +48,7 @@ def generate_content(basepath:str, src_path:str, template_path:str = "./template
 
 
 def copy_static(basepath:str):
-    public = "." + os.path.join(basepath, "docs")
+    public = "./docs"
     static = "./static"
     if os.path.exists(public):
         print(f"Clearing old data at {public}")
